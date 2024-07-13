@@ -1,4 +1,6 @@
+"use client";
 import { Badge } from "@/components/ui/badge";
+
 import {
   Card,
   CardContent,
@@ -14,8 +16,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import TakeButton from "./TakeButton";
+import { useEffect, useState } from "react";
+import { useFetchEscrowAccounts } from "@/hooks/instructionsHooks/useEscrow";
 
 export default function Transactions() {
+  const [escrowAccounts, setEscrowAccounts] = useState<any[]>([]);
+  const fetchEscrowAccounts = useFetchEscrowAccounts();
+
+  useEffect(() => {
+    const loadEscrowAccounts = async () => {
+      const accounts = await fetchEscrowAccounts();
+      setEscrowAccounts(accounts);
+      console.log("accounts", accounts);
+    };
+
+    loadEscrowAccounts();
+  }, [fetchEscrowAccounts]);
+
   return (
     <Card>
       <CardHeader className="px-7">
@@ -25,144 +43,60 @@ export default function Transactions() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Customer</TableHead>
-              <TableHead className="hidden sm:table-cell">
-                Transaction Type
-              </TableHead>
-              <TableHead className="hidden sm:table-cell">Status</TableHead>
-              <TableHead className="hidden md:table-cell">Date</TableHead>
-              <TableHead className="text-right">Amount (SOL)</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow className="bg-accent">
-              <TableCell>
-                <div className="font-medium">Liam Johnson</div>
-                <div className="hidden text-sm text-muted-foreground md:inline">
-                  Wallet: 0xA1B2...C3D4
-                </div>
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">
-                Escrow Payment
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">
-                <Badge className="text-xs" variant="secondary">
-                  Fulfilled
-                </Badge>
-              </TableCell>
-              <TableCell className="hidden md:table-cell">2023-06-23</TableCell>
-              <TableCell className="text-right">5.00</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                <div className="font-medium">Olivia Smith</div>
-                <div className="hidden text-sm text-muted-foreground md:inline">
-                  Wallet: 0xE5F6...G7H8
-                </div>
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">Refund</TableCell>
-              <TableCell className="hidden sm:table-cell">
-                <Badge className="text-xs" variant="outline">
-                  Declined
-                </Badge>
-              </TableCell>
-              <TableCell className="hidden md:table-cell">2023-06-24</TableCell>
-              <TableCell className="text-right">3.00</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                <div className="font-medium">Noah Williams</div>
-                <div className="hidden text-sm text-muted-foreground md:inline">
-                  Wallet: 0xI9J0...K1L2
-                </div>
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">
-                Subscription
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">
-                <Badge className="text-xs" variant="secondary">
-                  Fulfilled
-                </Badge>
-              </TableCell>
-              <TableCell className="hidden md:table-cell">2023-06-25</TableCell>
-              <TableCell className="text-right">10.00</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                <div className="font-medium">Emma Brown</div>
-                <div className="hidden text-sm text-muted-foreground md:inline">
-                  Wallet: 0xM3N4...O5P6
-                </div>
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">
-                Escrow Payment
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">
-                <Badge className="text-xs" variant="secondary">
-                  Fulfilled
-                </Badge>
-              </TableCell>
-              <TableCell className="hidden md:table-cell">2023-06-26</TableCell>
-              <TableCell className="text-right">15.00</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                <div className="font-medium">Liam Johnson</div>
-                <div className="hidden text-sm text-muted-foreground md:inline">
-                  Wallet: 0xA1B2...C3D4
-                </div>
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">
-                Escrow Payment
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">
-                <Badge className="text-xs" variant="secondary">
-                  Fulfilled
-                </Badge>
-              </TableCell>
-              <TableCell className="hidden md:table-cell">2023-06-23</TableCell>
-              <TableCell className="text-right">5.00</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                <div className="font-medium">Olivia Smith</div>
-                <div className="hidden text-sm text-muted-foreground md:inline">
-                  Wallet: 0xE5F6...G7H8
-                </div>
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">Refund</TableCell>
-              <TableCell className="hidden sm:table-cell">
-                <Badge className="text-xs" variant="outline">
-                  Declined
-                </Badge>
-              </TableCell>
-              <TableCell className="hidden md:table-cell">2023-06-24</TableCell>
-              <TableCell className="text-right">3.00</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                <div className="font-medium">Emma Brown</div>
-                <div className="hidden text-sm text-muted-foreground md:inline">
-                  Wallet: 0xM3N4...O5P6
-                </div>
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">
-                Escrow Payment
-              </TableCell>
-              <TableCell className="hidden sm:table-cell">
-                <Badge className="text-xs" variant="secondary">
-                  Fulfilled
-                </Badge>
-              </TableCell>
-              <TableCell className="hidden md:table-cell">2023-06-26</TableCell>
-              <TableCell className="text-right">15.00</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
+        {escrowAccounts.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Customer</TableHead>
+                <TableHead className="hidden sm:table-cell">
+                  Transaction Type
+                </TableHead>
+                <TableHead className="hidden md:table-cell">Status</TableHead>
+                <TableHead className="text-right">Amount (SOL)</TableHead>
+                <TableHead className="text-right"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableData />
+            </TableBody>
+          </Table>
+        ) : (
+          <p>No escrow accounts found.</p>
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+interface TableDatProps {
+  seed: string;
+  maker: string;
+  mintA: string;
+  mintB: string;
+  receive: string;
+  bump: string;
+}
+
+function TableData() {
+  return (
+    <>
+      <TableRow>
+        <TableCell>
+          <div className="hidden text-sm text-muted-foreground md:inline">
+            Wallet: 0xM3N4...O5P6
+          </div>
+        </TableCell>
+        <TableCell className="hidden sm:table-cell">Escrow Payment</TableCell>
+        <TableCell className="hidden sm:table-cell">
+          <Badge className="text-xs" variant="secondary">
+            Pending
+          </Badge>
+        </TableCell>
+        <TableCell className="text-right">15.00</TableCell>
+        <TableCell className="text-right">
+          <TakeButton />
+        </TableCell>
+      </TableRow>
+    </>
   );
 }

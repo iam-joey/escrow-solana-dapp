@@ -6,7 +6,7 @@ import { ThemeToggleButton } from "../ToggleButtonTheme";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 
-const WalletMultiButtonFix = dynamic(
+export const WalletMultiButtonFix = dynamic(
   async () =>
     (await import("@solana/wallet-adapter-react-ui")).WalletMultiButton,
   {
@@ -32,12 +32,12 @@ const DeskTopNavBar: React.FC = () => {
               theme === "light"
                 ? `${
                     path === item.route
-                      ? "text-slate-900 border-b border-green-600 pb-2"
+                      ? "text-slate-900 border-b border-black pb-2"
                       : "text-zinc-500"
                   }`
                 : `${
                     path === item.route
-                      ? "border-b border-green-600 pb-2 text-slate-300"
+                      ? "border-b border-blue-600 pb-2 text-slate-300"
                       : "text-slate-500"
                   }`
             }  p-3 items-center `}

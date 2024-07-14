@@ -2,11 +2,17 @@ import { BN } from "@coral-xyz/anchor";
 import { randomBytes } from "crypto";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
   getMint,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { PublicKey } from "@solana/web3.js";
+import {
+  ComputeBudgetProgram,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from "@solana/web3.js";
 import { useAnchorProgram } from "@/providers/AnchorProvider";
 import { useCallback } from "react";
 import { toast } from "sonner";
@@ -15,9 +21,19 @@ export const useMakeEscrow = () => {
   const { program, connection } = useAnchorProgram();
   const { publicKey } = useWallet();
 
+  const isValidTokenMint = async (address: PublicKey): Promise<boolean> => {
+    try {
+      console.log("here 3");
+      const mintInfo = await getMint(connection, address);
+      return mintInfo !== null;
+    } catch (error) {
+      return false;
+    }
+  };
+
   const makeEscrow = async (
-    mintA: string,
-    mintB: string,
+    minta: string,
+    mintb: string,
     tradeAmount: number,
     receiveAmount: number
   ) => {
@@ -27,10 +43,22 @@ export const useMakeEscrow = () => {
     }
 
     try {
+      console.log("here 1");
+      let mintA = new PublicKey(minta);
+      let mintB = new PublicKey(mintb);
+      console.log("here 2");
+      const isMintAValid = await isValidTokenMint(mintA);
+      const isMintBValid = await isValidTokenMint(mintB);
+
+      if (!isMintAValid || !isMintBValid) {
+        toast.warning("enter valid token mint addresses");
+        return;
+      }
+
       const seed = new BN(randomBytes(8));
       const makerAtaa = getAssociatedTokenAddressSync(
         new PublicKey(mintA),
-        publicKey,
+        new PublicKey(publicKey),
         false,
         TOKEN_PROGRAM_ID
       );
@@ -50,17 +78,17 @@ export const useMakeEscrow = () => {
         true,
         TOKEN_PROGRAM_ID
       );
-
+      console.log("1");
       const mintAinfo = await getMint(connection, new PublicKey(mintA));
       const mintBinfo = await getMint(connection, new PublicKey(mintB));
-
+      console.log("2");
       const deposit = new BN(tradeAmount * 10 ** mintAinfo.decimals);
       const receive = new BN(receiveAmount * 10 ** mintBinfo.decimals);
 
       const transactionSign = await program.methods
         .make(seed, deposit, receive)
         .accounts({
-          maker: publicKey,
+          maker: new PublicKey(publicKey),
           mintA: new PublicKey(mintA),
           mintB: new PublicKey(mintB),
           makerAtaA: makerAtaa,
@@ -68,11 +96,13 @@ export const useMakeEscrow = () => {
           vault,
         })
         .rpc();
-      toast.success("Transaction Succeded");
+      toast.success("escrow created successfully");
+
       return transactionSign;
     } catch (error) {
       console.error("Error in makeEscrow:", error);
-      toast.warning("something went wrong while making escrow");
+      //@ts-ignore
+      toast.warning(error.message);
     }
   };
 
@@ -95,7 +125,7 @@ export const useRefundEscrow = () => {
 
       const makerAtaa = getAssociatedTokenAddressSync(
         new PublicKey(escrowAccount.mintA),
-        publicKey,
+        new PublicKey(publicKey),
         false,
         TOKEN_PROGRAM_ID
       );
@@ -122,7 +152,8 @@ export const useRefundEscrow = () => {
       return transactionSign;
     } catch (error) {
       console.error("Error in refundEscrow:", error);
-      toast.warning("Something went wrong while doing refund");
+      //@ts-ignore
+      toast.warning(error.message);
     }
   };
 
@@ -138,11 +169,9 @@ export const useTakeEscrow = () => {
         toast.warning("Connect your wallet first");
         return;
       }
-
       const escrowAccount = await program.account.escrow.fetch(
         new PublicKey(escrow)
       );
-
       const takerAtaA = getAssociatedTokenAddressSync(
         escrowAccount.mintA,
         new PublicKey(publicKey),
@@ -155,8 +184,6 @@ export const useTakeEscrow = () => {
         false,
         TOKEN_PROGRAM_ID
       );
-      console.log("asdasdsad", takerAtaB.toString());
-      console.log("asdasdsad", takerAtaA.toString());
       const makerAtaB = getAssociatedTokenAddressSync(
         escrowAccount.mintB,
         escrowAccount.maker,
@@ -170,27 +197,28 @@ export const useTakeEscrow = () => {
         TOKEN_PROGRAM_ID
       );
 
-      const transactionSign = await program.methods
+      const sign = await program.methods
         .take()
         .accountsPartial({
           escrow: new PublicKey(escrow),
-          maker: escrowAccount.maker,
-          makerAtaB,
-          taker: new PublicKey(publicKey),
           takerAtaA,
           takerAtaB,
+          makerAtaB,
           vault,
-          tokenProgram: TOKEN_PROGRAM_ID,
+          maker: escrowAccount.maker,
           mintA: escrowAccount.mintA,
           mintB: escrowAccount.mintB,
+          taker: wallet.publicKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
         })
         .rpc();
-
-      toast.success("Transaction completed");
-      return transactionSign;
+      console.log(sign);
+      toast.success(`Transaction completed`);
     } catch (error) {
       console.error("Error in takeEscrow:", error);
-      toast.warning("Something went wrong while taking escrow deal");
+      //@ts-ignore
+      toast.warning(error.message);
     }
   };
 
@@ -198,13 +226,31 @@ export const useTakeEscrow = () => {
 };
 
 export const useFetchEscrowAccounts = () => {
-  const { program } = useAnchorProgram();
+  const { program, connection } = useAnchorProgram();
 
   const fetchEscrowAccounts = useCallback(async () => {
     if (!program) return [];
     try {
       const res = await program.account.escrow.all();
-      return res;
+
+      const updatedArray = await Promise.all(
+        res.map(async (data) => {
+          const mintInfo = await getMint(connection, data.account.mintB);
+
+          const newData = {
+            ...data,
+            account: {
+              ...data.account,
+              receive: new BN(data.account.receive).div(
+                new BN(10 ** mintInfo.decimals)
+              ),
+            },
+          };
+          return newData;
+        })
+      );
+
+      return updatedArray;
     } catch (error) {
       console.error("Error fetching escrow accounts:", error);
       return [];

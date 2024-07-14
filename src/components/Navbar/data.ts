@@ -4,11 +4,7 @@ export const NavBarData = [
     route: "/",
   },
   {
-    name: "ESCROW",
+    name: "ESCROWS",
     route: "/escrow",
-  },
-  {
-    name: "HISTORY",
-    route: "/history",
   },
 ];

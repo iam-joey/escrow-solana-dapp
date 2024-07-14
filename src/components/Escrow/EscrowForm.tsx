@@ -13,24 +13,30 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-// import { useMakeEscrow } from "@/hooks/instructionsHooks/useEscrow";
 import { toast } from "sonner";
 import { useMakeEscrow } from "@/hooks/instructionsHooks/useEscrow";
+import { makerMintAddress, reciverMintAddress } from "../../../anchor/setup";
+import { useRouter } from "next/navigation";
 
 export default function EscrowForm() {
   const [open, setOpen] = useState(false);
   const makeEscrow = useMakeEscrow();
+  const [mintA, setMintA] = useState(makerMintAddress.toString());
+  const [mintB, setMintB] = useState(reciverMintAddress.toString());
+  const [amount, setAmount] = useState(100);
+  const [receive, setRecive] = useState(200);
+  const router = useRouter();
   const createEscrow = async () => {
     try {
       toast.info("loading");
-      const sign = await makeEscrow(
-        "13KK1nUnyR9XHt3Fit6saS8CqRWxrYW4QSxyvC7ojvdN",
-        "BZ7gtjG2MDoqhhEr3mLTkHr3gaessuc9g1WPJap9pkYv",
-        100,
-        500
-      );
-
-      toast.success("escrow created successfully");
+      if (mintA === "" || mintB === "") {
+        toast.warning("Fill the token mint address");
+      }
+      if (amount < 0 || receive < 0) {
+        toast.warning("Amount should be greater than 0");
+      }
+      await makeEscrow(mintA, mintB, amount, receive);
+      router.push("/escrow");
     } catch (error) {
       console.log("error is fetching", error);
     }
@@ -57,6 +63,10 @@ export default function EscrowForm() {
               <Input
                 id="offeringTokenMint"
                 placeholder="Enter the token mint address you are offering"
+                defaultValue={mintA}
+                onChange={(e) => {
+                  setMintA(e.target.value);
+                }}
               />
             </div>
             <div className="space-y-2">
@@ -66,6 +76,10 @@ export default function EscrowForm() {
               <Input
                 id="receivingTokenMint"
                 placeholder="Enter the token mint address you wish to receive"
+                defaultValue={mintB}
+                onChange={(e) => {
+                  setMintB(e.target.value);
+                }}
               />
             </div>
           </div>
@@ -76,6 +90,10 @@ export default function EscrowForm() {
                 id="offeringAmount"
                 type="number"
                 placeholder="Enter the number of tokens you are offering"
+                defaultValue={amount}
+                onChange={(e) => {
+                  setAmount(Number(e.target.value));
+                }}
               />
             </div>
             <div className="space-y-2">
@@ -84,6 +102,10 @@ export default function EscrowForm() {
                 id="receivingAmount"
                 type="number"
                 placeholder="Enter the number of tokens you expect to receive"
+                defaultValue={receive}
+                onChange={(e) => {
+                  setRecive(Number(e.target.value));
+                }}
               />
             </div>
           </div>

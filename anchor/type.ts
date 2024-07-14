@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/anchor_escrow.json`.
  */
 export type AnchorEscrow = {
-  address: "GVckKxoCh2nZ3jfC6ti2wMMgkXBxC2DcqL2vnuNdd6Gz";
+  address: "2virYXPbbSCjCS7zysCo9Rknoi4kzeefQ3aWHU8X8Nu8";
   metadata: {
     name: "anchorEscrow";
     version: "0.1.0";

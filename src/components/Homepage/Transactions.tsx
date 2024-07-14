@@ -41,7 +41,10 @@ export default function Transactions() {
   useEffect(() => {
     const loadEscrowAccounts = async () => {
       const accounts = await fetchEscrowAccounts();
-      setEscrowAccounts(accounts);
+      const updatedAccounts = accounts.filter(
+        (data) => data.account.maker.toString() !== publicKey
+      );
+      setEscrowAccounts(updatedAccounts);
     };
     loadEscrowAccounts();
   }, [fetchEscrowAccounts]);
@@ -106,16 +109,12 @@ function TableData({
     <>
       <TableRow>
         <TableCell>
-          <div className="hidden text-sm font-bold text-muted-foreground md:inline">
+          <div className=" text-sm font-bold text-muted-foreground md:inline">
             {maker || "asdad"}
           </div>
         </TableCell>
-        <TableCell className="hidden sm:table-cell truncate max-w-[150px]">
-          {mintA || "asdasdad"}
-        </TableCell>
-        <TableCell className="hidden sm:table-cell truncate max-w-[150px]">
-          {mintB || "asdasdasdsadasd"}
-        </TableCell>
+        <LinkToMint mint={mintA} />
+        <LinkToMint mint={mintB} />
         <TableCell className="text-right">{amount ?? 0}</TableCell>
         <TableCell className="text-right">
           {owner === maker ? (
@@ -126,5 +125,38 @@ function TableData({
         </TableCell>
       </TableRow>
     </>
+  );
+}
+
+function LinkToMint({ mint }: { mint: string }) {
+  function generateSolanaExplorerLink(mintAddress: string): string {
+    const baseURL = "https://explorer.solana.com/address/";
+    const network = "devnet"; // You can change this to 'mainnet-beta' for mainnet
+
+    return `${baseURL}${mintAddress}?cluster=${network}`;
+  }
+  const explorerLink = generateSolanaExplorerLink(mint);
+  const handleClick = (event: any) => {
+    event.preventDefault();
+    window.open(explorerLink, "_blank");
+  };
+
+  const truncateMintString = (str: any, maxLength: any) => {
+    if (str.length <= maxLength) return str;
+    const firstPart = str.substring(0, maxLength / 2);
+    const lastPart = str.substring(str.length - maxLength / 2);
+    return `${firstPart}....${lastPart}`;
+  };
+  return (
+    <TableCell className="sm:table-cell truncate max-w-[150px] hover:text-green-600 hover:border-b border-green-700">
+      <a
+        href={explorerLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={handleClick}
+      >
+        <h1>{truncateMintString(mint, 10)}</h1>
+      </a>
+    </TableCell>
   );
 }

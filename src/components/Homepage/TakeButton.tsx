@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useTakeEscrow } from "@/hooks/instructionsHooks/useEscrow";
-import { toast } from "sonner";
 
 export default function TakeButton({ escrow }: { escrow: string }) {
   const [open, setOpen] = useState(false);
@@ -43,7 +42,6 @@ export default function TakeButton({ escrow }: { escrow: string }) {
           <Button
             onClick={async () => {
               setOpen(false);
-              toast.info("loading");
               await takeEscrow(escrow);
             }}
           >

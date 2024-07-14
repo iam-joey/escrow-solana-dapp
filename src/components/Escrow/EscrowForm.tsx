@@ -28,7 +28,6 @@ export default function EscrowForm() {
   const router = useRouter();
   const createEscrow = async () => {
     try {
-      toast.info("loading");
       if (mintA === "" || mintB === "") {
         toast.warning("Fill the token mint address");
       }

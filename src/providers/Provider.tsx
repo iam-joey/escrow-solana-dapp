@@ -7,7 +7,7 @@ import { Toaster, toast } from "sonner";
 export const Providers = ({ children }: { children: ReactNode }) => {
   return (
     <>
-      <Toaster richColors closeButton position="top-center" />
+      <Toaster richColors closeButton position="top-center" duration={5000} />
       <ThemeProvider
         attribute="class"
         defaultTheme="system"

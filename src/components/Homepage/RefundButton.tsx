@@ -10,17 +10,17 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { useTakeEscrow } from "@/hooks/instructionsHooks/useEscrow";
+import { useRefundEscrow } from "@/hooks/instructionsHooks/useEscrow";
 import { toast } from "sonner";
 
-export default function TakeButton({ escrow }: { escrow: string }) {
+export default function RefundButton({ escrow }: { escrow: string }) {
   const [open, setOpen] = useState(false);
-  const takeEscrow = useTakeEscrow();
+  const refundEscrow = useRefundEscrow();
   return (
     <Dialog open={open} onOpenChange={setOpen} defaultOpen>
       <DialogTrigger asChild>
         <Button onClick={() => setOpen(true)} variant="default">
-          Take
+          Refund
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[400px]">
@@ -43,8 +43,8 @@ export default function TakeButton({ escrow }: { escrow: string }) {
           <Button
             onClick={async () => {
               setOpen(false);
-              toast.info("loading");
-              await takeEscrow(escrow);
+              toast.info("Refund initiaited");
+              await refundEscrow(escrow);
             }}
           >
             Yes

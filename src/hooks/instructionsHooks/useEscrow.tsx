@@ -22,7 +22,8 @@ export const useMakeEscrow = () => {
     receiveAmount: number
   ) => {
     if (!publicKey || !program || !connection) {
-      throw new Error("Wallet not connected or program not initialized");
+      toast.warning("connect your wallet first");
+      return;
     }
 
     try {
@@ -67,111 +68,133 @@ export const useMakeEscrow = () => {
           vault,
         })
         .rpc();
-
+      toast.success("Transaction Succeded");
       return transactionSign;
     } catch (error) {
       console.error("Error in makeEscrow:", error);
-      throw error;
+      toast.warning("something went wrong while making escrow");
     }
   };
 
   return makeEscrow;
 };
-export const useRefundEscrow = async (escrow: string) => {
-  try {
-    const value = useAnchorProgram();
-    const { program, connection } = value;
-    const { publicKey } = useWallet();
-    if (!publicKey || !program || !connection) return;
+export const useRefundEscrow = () => {
+  const { program, connection } = useAnchorProgram();
+  const { publicKey } = useWallet();
 
-    const escrowAccount = await program.account.escrow.fetch(
-      new PublicKey(escrow)
-    );
+  const refundEscrow = async (escrow: string) => {
+    try {
+      if (!publicKey || !program || !connection) {
+        toast.warning("Connect your wallet first");
+        return;
+      }
 
-    const makerAtaa = getAssociatedTokenAddressSync(
-      new PublicKey((await escrowAccount).mintA),
-      publicKey,
-      false,
-      TOKEN_PROGRAM_ID
-    );
+      const escrowAccount = await program.account.escrow.fetch(
+        new PublicKey(escrow)
+      );
 
-    const vault = getAssociatedTokenAddressSync(
-      new PublicKey(escrowAccount.mintA),
-      new PublicKey(escrow),
-      true,
-      TOKEN_PROGRAM_ID
-    );
+      const makerAtaa = getAssociatedTokenAddressSync(
+        new PublicKey(escrowAccount.mintA),
+        publicKey,
+        false,
+        TOKEN_PROGRAM_ID
+      );
 
-    const transactionSign = await program.methods.refund().accountsPartial({
-      makerAtaA: makerAtaa,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      vault,
-      escrow: new PublicKey(escrow),
-      maker: new PublicKey(escrowAccount.maker),
-      mintA: new PublicKey(escrowAccount.mintA),
-    });
+      const vault = getAssociatedTokenAddressSync(
+        new PublicKey(escrowAccount.mintA),
+        new PublicKey(escrow),
+        true,
+        TOKEN_PROGRAM_ID
+      );
 
-    return transactionSign;
-  } catch (error) {
-    console.log(error);
-  }
+      const transactionSign = await program.methods
+        .refund()
+        .accountsPartial({
+          makerAtaA: makerAtaa,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          vault,
+          escrow: new PublicKey(escrow),
+          maker: new PublicKey(escrowAccount.maker),
+          mintA: new PublicKey(escrowAccount.mintA),
+        })
+        .rpc();
+      toast.success("Transaction Succeded");
+      return transactionSign;
+    } catch (error) {
+      console.error("Error in refundEscrow:", error);
+      toast.warning("Something went wrong while doing refund");
+    }
+  };
+
+  return refundEscrow;
 };
 
-export const useTakeEscrow = async (escrow: string) => {
-  try {
-    const value = useAnchorProgram();
-    const { program, connection } = value;
-    const { publicKey } = useWallet();
-    if (!publicKey || !program || !connection) return;
+export const useTakeEscrow = () => {
+  const { program, connection, publicKey, wallet } = useAnchorProgram();
 
-    const escrowAccount = await program.account.escrow.fetch(
-      new PublicKey(escrow)
-    );
+  const takeEscrow = async (escrow: string) => {
+    try {
+      if (!publicKey || !program || !connection || !wallet) {
+        toast.warning("Connect your wallet first");
+        return;
+      }
 
-    const takerAtaA = getAssociatedTokenAddressSync(
-      new PublicKey(escrowAccount.mintA),
-      publicKey,
-      false,
-      TOKEN_PROGRAM_ID
-    );
+      const escrowAccount = await program.account.escrow.fetch(
+        new PublicKey(escrow)
+      );
 
-    const takerAtaB = getAssociatedTokenAddressSync(
-      new PublicKey(escrowAccount.mintB),
-      publicKey,
-      false,
-      TOKEN_PROGRAM_ID
-    );
+      const takerAtaA = getAssociatedTokenAddressSync(
+        escrowAccount.mintA,
+        new PublicKey(publicKey),
+        false,
+        TOKEN_PROGRAM_ID
+      );
+      const takerAtaB = getAssociatedTokenAddressSync(
+        escrowAccount.mintB,
+        new PublicKey(publicKey),
+        false,
+        TOKEN_PROGRAM_ID
+      );
+      console.log("asdasdsad", takerAtaB.toString());
+      console.log("asdasdsad", takerAtaA.toString());
+      const makerAtaB = getAssociatedTokenAddressSync(
+        escrowAccount.mintB,
+        escrowAccount.maker,
+        false,
+        TOKEN_PROGRAM_ID
+      );
+      const vault = getAssociatedTokenAddressSync(
+        escrowAccount.mintA,
+        new PublicKey(escrow),
+        true,
+        TOKEN_PROGRAM_ID
+      );
 
-    const makerAtab = getAssociatedTokenAddressSync(
-      new PublicKey(escrowAccount.mintB),
-      escrowAccount.maker,
-      false,
-      TOKEN_PROGRAM_ID
-    );
+      const transactionSign = await program.methods
+        .take()
+        .accountsPartial({
+          escrow: new PublicKey(escrow),
+          maker: escrowAccount.maker,
+          makerAtaB,
+          taker: new PublicKey(publicKey),
+          takerAtaA,
+          takerAtaB,
+          vault,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          mintA: escrowAccount.mintA,
+          mintB: escrowAccount.mintB,
+        })
+        .rpc();
 
-    const vault = getAssociatedTokenAddressSync(
-      new PublicKey(escrowAccount.mintA),
-      new PublicKey(escrow),
-      true,
-      TOKEN_PROGRAM_ID
-    );
+      toast.success("Transaction completed");
+      return transactionSign;
+    } catch (error) {
+      console.error("Error in takeEscrow:", error);
+      toast.warning("Something went wrong while taking escrow deal");
+    }
+  };
 
-    const transactionSign = await program.methods.take().accountsPartial({
-      maker: escrowAccount.maker,
-      escrow: new PublicKey(escrow),
-      mintA: new PublicKey(escrowAccount.mintA),
-      mintB: new PublicKey(escrowAccount.mintB),
-      makerAtaB: makerAtab,
-      takerAtaA,
-      takerAtaB,
-      taker: publicKey,
-      vault,
-    });
-
-    return transactionSign;
-  } catch (error) {
-    console.log(error);
-  }
+  return takeEscrow;
 };
 
 export const useFetchEscrowAccounts = () => {
@@ -181,7 +204,6 @@ export const useFetchEscrowAccounts = () => {
     if (!program) return [];
     try {
       const res = await program.account.escrow.all();
-      console.log("data fetched", res);
       return res;
     } catch (error) {
       console.error("Error fetching escrow accounts:", error);

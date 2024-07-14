@@ -8,6 +8,7 @@ interface AnchorProgramContextType {
   program: Program<AnchorEscrow> | null;
   connection: any;
   wallet: any;
+  publicKey: any;
 }
 
 const AnchorProgramContext = createContext<
@@ -19,6 +20,7 @@ export const AnchorProgramProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const { connection } = useConnection();
   const wallet = useAnchorWallet();
+
   const [program, setProgram] = useState<Program<AnchorEscrow> | null>(null);
 
   useEffect(() => {
@@ -33,8 +35,12 @@ export const AnchorProgramProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [wallet, connection]);
 
+  const publicKey = wallet?.publicKey?.toString() || null;
+
   return (
-    <AnchorProgramContext.Provider value={{ program, connection, wallet }}>
+    <AnchorProgramContext.Provider
+      value={{ program, connection, wallet, publicKey }}
+    >
       {children}
     </AnchorProgramContext.Provider>
   );

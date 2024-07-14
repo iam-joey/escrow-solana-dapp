@@ -22,14 +22,15 @@ export default function EscrowForm() {
   const makeEscrow = useMakeEscrow();
   const createEscrow = async () => {
     try {
+      toast.info("loading");
       const sign = await makeEscrow(
         "13KK1nUnyR9XHt3Fit6saS8CqRWxrYW4QSxyvC7ojvdN",
         "BZ7gtjG2MDoqhhEr3mLTkHr3gaessuc9g1WPJap9pkYv",
         100,
         500
       );
-      console.log("sign is", sign);
-      toast.success(sign);
+
+      toast.success("escrow created successfully");
     } catch (error) {
       console.log("error is fetching", error);
     }

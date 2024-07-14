@@ -6,14 +6,6 @@ import { ThemeToggleButton } from "../ToggleButtonTheme";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
-const WalletMultiButtonFix = dynamic(
-  async () =>
-    (await import("@solana/wallet-adapter-react-ui")).WalletMultiButton,
-  {
-    ssr: false,
-    loading: () => <div className=" p-5 w-20 rounded-lg">Loading...</div>,
-  }
-);
 export default function MobileNavbar() {
   const router = useRouter();
   return (
@@ -52,7 +44,7 @@ export default function MobileNavbar() {
       </div>
       <div className="flex gap-4  p-2 items-center">
         <ThemeToggleButton />
-        <WalletMultiButtonFix />
+        {/* <WalletMultiButtonFix /> */}
       </div>
     </header>
   );
